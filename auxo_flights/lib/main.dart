@@ -1,7 +1,26 @@
+import 'package:auxo_flights/widgets/flights/flight_detail.dart';
+import 'package:auxo_flights/widgets/flights/flights.dart';
+import 'package:auxo_flights/widgets/home/home.dart';
 import 'package:flutter/material.dart';
+import 'package:auxo_flights/api_services/flights_service.dart';
+import 'package:auxo_flights/models/models.dart';
+import 'package:auxo_flights/database_helper/database_helper.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart';
+import 'package:auxo_flights/widgets/splash/splash.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // Required by sqflite
   runApp(const MyApp());
+
+/*
+  final databasePath = await getDatabasesPath();
+  final databaseName = 'Flights.db';
+  final path = join(databasePath, databaseName);
+  if(await databaseExists(path)) {
+    await deleteDatabase(path);
+    print('Database deleted');
+  }*/
 }
 
 class MyApp extends StatelessWidget {
@@ -11,7 +30,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Auxo Demo',
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -31,7 +50,21 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      initialRoute: Splash.routeName,
+      routes: {
+        Splash.routeName: (context) => const Splash(),
+        Home.routeName: (context) => Home(),
+        Flights.routeName: (context) => Flights(),
+        },
+      onGenerateRoute: (settings) {
+        if (settings.name == FlightDetail.routeName) {
+          final String id = settings.arguments as String;
+          return MaterialPageRoute(builder: (context) => FlightDetail(id: id));
+        }
+        // Handle other named routes, if any
+        return null;
+      },
+      // home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
 }
