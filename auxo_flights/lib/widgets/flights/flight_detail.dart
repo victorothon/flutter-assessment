@@ -39,6 +39,7 @@ class FlightDetail extends StatelessWidget {
           }
           Map<String, dynamic>? data = snapshot.data;
           List<Map<String, dynamic>> legs = data?['legs'];
+
           return Scaffold(
             appBar: AppBar(
               title: Center(child: Text('Flight Detail')),
@@ -151,41 +152,49 @@ class FlightDetail extends StatelessWidget {
                       );
                     },
                   ),
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Container(
-                        padding: EdgeInsets.all(32.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text('${data?['itinerary']['agent']}',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color.fromARGB(255, 97, 17, 116),
-                                )),
-                            Text(
-                                'Rating: ${data?['itinerary']['agent_rating']}'),
-                          ],
-                        ),
-                      ),
+                  Container(
+                    decoration: BoxDecoration(
+                    border: Border(
+                      top: BorderSide(width: 2.0, color: Colors.grey),
+                      bottom: BorderSide(width: 2.0, color: Colors.grey),
                     ),
-                    Expanded(
-                      child: Container(
-                        padding: EdgeInsets.all(24.0),
-                        child: Text(
-                          '£${data?['itinerary']['price']}',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Color.fromARGB(255, 97, 17, 116),
+                  ),
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Container(
+                          padding: EdgeInsets.all(32.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text('${data?['itinerary']['agent']}',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color.fromARGB(255, 97, 17, 116),
+                                  )),
+                              Text(
+                                  'Rating: ${data?['itinerary']['agent_rating']}'),
+                            ],
                           ),
-                          textAlign: TextAlign.right,
                         ),
                       ),
-                    ),
-                  ],
+                      Expanded(
+                        child: Container(
+                          padding: EdgeInsets.all(24.0),
+                          child: Text(
+                            '£${data?['itinerary']['price']}',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Color.fromARGB(255, 97, 17, 116),
+                            ),
+                            textAlign: TextAlign.right,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

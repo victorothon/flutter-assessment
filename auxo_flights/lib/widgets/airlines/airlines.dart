@@ -14,10 +14,11 @@ class _AirlinesState extends State<Airlines> {
   List<Map<String, dynamic>> itineraries = [];
   List<Map<String, dynamic>> legs = [];
   List<Map<String, dynamic>> airlines = [];
-  double _currentSliderValue = 200; //price slider value
+  int _currentSliderValue = 4; //price slider value
   String? departureAirport;
   String? arrivalAirport;
-  double price = 200;
+  String? airlineId;
+  int count = 4;
 
   List<dynamic> filteredData = [];
 
@@ -40,49 +41,38 @@ class _AirlinesState extends State<Airlines> {
   void updateFilteredData() async {
     List<Map<String, dynamic>> tempFilteredData = [];
 
-    if (departureAirport == null && arrivalAirport == null) {
-      tempFilteredData =
-          await DatabaseHelper.instance.getItineraries(null, null, price);
-    } else {
-      tempFilteredData = await DatabaseHelper.instance
-          .getItineraries(departureAirport, arrivalAirport, price);
-    }
+    tempFilteredData = await DatabaseHelper.instance
+          .getLegs(departureAirport, arrivalAirport, count);
+
     setState(() {
       filteredData = tempFilteredData;
     });
   }
 
-  List<Map<String, dynamic>> filteredDataToDisplay() {
-    List<Map<String, dynamic>> result = [];
+  List<Map<String, dynamic>> filteredLegDataToDisplay(List<dynamic> filteredData) {
+    Map<String, Map<String, dynamic>> airlineData = {};
 
-    for (var itinerary in filteredData) {
-      List<String> legIds = itinerary['legs'].split(',');
+    for (var leg in filteredData) {
+      String airlineId = leg['airline_id'] as String;
 
-      String firstLegDepartureAirport = legs.firstWhere(
-          (leg) => leg['id'] == legIds.first)['departure_airport'] as String;
-      String lastLegArrivalAirport =
-          legs.firstWhere((leg) => leg['id'] == legIds.last)['arrival_airport']
-              as String;
+      if (!airlineData.containsKey(airlineId)) {
+        // Get airline name from the global airlines list
+        String airlineName = airlines.firstWhere((airline) => airline['id'] == airlineId)['name'] as String;
 
-      int stops = 0;
-      for (var legId in legIds) {
-        stops += legs.firstWhere((leg) => leg['id'] == legId)['stops'] as int;
+        airlineData[airlineId] = {
+          'airline_name': airlineName,
+          'departure_airports': [],
+          'arrival_airports': [],
+          'num_of_legs': 0,
+        };
       }
 
-      double price = (itinerary['price'] is int)
-          ? (itinerary['price'] as int).toDouble()
-          : itinerary['price'] as double;
-
-      result.add({
-        'id': itinerary['id'],
-        'departure_airport': firstLegDepartureAirport,
-        'arrival_airport': lastLegArrivalAirport,
-        'stops': stops.toString(),
-        'price': price.round().toString(),
-      });
+      airlineData[airlineId]?['departure_airports'].add(leg['departure_airport']);
+      airlineData[airlineId]?['arrival_airports'].add(leg['arrival_airport']);
+      airlineData[airlineId]?['num_of_legs']++;
     }
 
-    return result;
+    return airlineData.values.toList();
   }
 
   @override
@@ -91,14 +81,14 @@ class _AirlinesState extends State<Airlines> {
         legs.map((leg) => leg['departure_airport'] as String).toSet().toList();
     List<String> arrivalAirports =
         legs.map((leg) => leg['arrival_airport'] as String).toSet().toList();
-    List<Map<String, dynamic>> dataToDisplay = filteredDataToDisplay();
+    List<Map<String, dynamic>> dataToDisplay = filteredLegDataToDisplay(filteredData);
 
     return Scaffold(
       appBar: AppBar(
         title: Center(child: Text('Airlines')),
         leading: BackButton(
-        color: Color.fromARGB(255, 97, 17, 116),
-          ),
+          color: Color.fromARGB(255, 97, 17, 116),
+        ),
         actions: <Widget>[
           Padding(
               padding: EdgeInsets.only(right: 20.0),
@@ -130,7 +120,7 @@ class _AirlinesState extends State<Airlines> {
                     Text('Departure Airport'),
                     DropdownButton<String>(
                       value: departureAirport,
-                      items: departureAirports.map((String value) {
+                      items: <String>['All', ...departureAirports].map((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
                           child: Text(value),
@@ -138,7 +128,7 @@ class _AirlinesState extends State<Airlines> {
                       }).toList(),
                       onChanged: (String? newValue) {
                         setState(() {
-                          departureAirport = newValue;
+                          departureAirport = newValue == 'All' ? null : newValue;
                           updateFilteredData();
                         });
                       },
@@ -152,7 +142,7 @@ class _AirlinesState extends State<Airlines> {
                     Text('Arrival Airport'),
                     DropdownButton<String>(
                       value: arrivalAirport,
-                      items: arrivalAirports.map((String value) {
+                      items: <String>['All', ...arrivalAirports].map((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
                           child: Text(value),
@@ -160,7 +150,7 @@ class _AirlinesState extends State<Airlines> {
                       }).toList(),
                       onChanged: (String? newValue) {
                         setState(() {
-                          arrivalAirport = newValue;
+                          arrivalAirport = newValue == 'All' ? null : newValue;
                           updateFilteredData();
                         });
                       },
@@ -172,17 +162,17 @@ class _AirlinesState extends State<Airlines> {
           ),
           Column(
             children: <Widget>[
-              Text('Price: £${price.toString()} '),
+              Text('Number of Legs: ${count.toString()} '),
               Slider(
-                value: _currentSliderValue,
+                value: _currentSliderValue.toDouble(),
                 min: 0,
-                max: 200,
-                divisions: 10,
+                max: 4,
+                divisions: 4,
                 label: _currentSliderValue.round().toString(),
-                onChanged: (double newvalue) {
+                onChanged: (double newValue) {
                   setState(() {
-                    _currentSliderValue = newvalue;
-                    price = newvalue;
+                    _currentSliderValue = newValue.toInt();
+                    count = newValue.toInt();
                     updateFilteredData();
                   });
                 },
@@ -194,13 +184,6 @@ class _AirlinesState extends State<Airlines> {
               itemCount: dataToDisplay.length,
               itemBuilder: (context, index) {
                 return GestureDetector(
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => FlightDetail(id: dataToDisplay[index]['id']),
-                      ),
-                    );
-                  },
                   child: Card(
                     color: Color.fromARGB(
                         255, 236, 212, 243), // specify the color here
@@ -210,41 +193,23 @@ class _AirlinesState extends State<Airlines> {
                     child: ListTile(
                       title: Column(
                         children: <Widget>[
-                          Row(
-                            children: <Widget>[
-                              Expanded(
-                                child: Text(
-                                  'Departure Airport: ${dataToDisplay[index]['departure_airport']}',
-                                  style: TextStyle(fontSize: 16.0),
-                                ),
-                              ),
-                              Expanded(
-                                child: Text(
-                                  'Arrival Airport:       ${dataToDisplay[index]['arrival_airport']}',
-                                  style: TextStyle(fontSize: 16.0),
-                                ),
-                              ),
-                            ],
+                          Text(
+                            'Airline: ${dataToDisplay[index]?['airline_name']}',
+                            style: TextStyle(fontSize: 16.0),
+                          ),
+                          Text(
+                            'Number of Legs: ${dataToDisplay[index]?['num_of_legs']}',
+                            style: TextStyle(fontSize: 16.0),
+                          ),
+                          Text(
+                            'Departure Airports: ${dataToDisplay[index]?['departure_airports'].join(', ')}',
+                            style: TextStyle(fontSize: 16.0),
+                          ),
+                          Text(
+                            'Arrival Airports: ${dataToDisplay[index]?['arrival_airports'].join(', ')}',
+                            style: TextStyle(fontSize: 16.0),
                           ),
                           Divider(color: Colors.black),
-                          Row(
-                            children: <Widget>[
-                              Expanded(
-                                child: Text(
-                                  'Stops: ${dataToDisplay[index]['stops']}',
-                                  style: TextStyle(fontSize: 16.0),
-                                ),
-                              ),
-                              Expanded(
-                                child: Text(
-                                  '£${dataToDisplay[index]['price']}',
-                                  style: TextStyle(
-                                      fontSize: 20.0,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            ],
-                          ),
                         ],
                       ),
                     ),

@@ -1,3 +1,4 @@
+import 'package:auxo_flights/widgets/airlines/airlines.dart';
 import 'package:auxo_flights/widgets/flights/flight_detail.dart';
 import 'package:auxo_flights/widgets/flights/flights.dart';
 import 'package:auxo_flights/widgets/home/home.dart';
@@ -55,6 +56,7 @@ class MyApp extends StatelessWidget {
         Splash.routeName: (context) => const Splash(),
         Home.routeName: (context) => Home(),
         Flights.routeName: (context) => Flights(),
+        Airlines.routeName: (context) => Airlines(),
         },
       onGenerateRoute: (settings) {
         if (settings.name == FlightDetail.routeName) {

@@ -154,6 +154,44 @@ class DatabaseHelper {
     return result;
   }
 
+  Future<List<Map<String, dynamic>>> getLegs(String? departureAirport, String? arrivalAirport, int numLegs) async {
+    final db = await database;
+
+    // Get all airlineIds
+    final List<Map<String, dynamic>> airlines = await db.query(DatabaseHelper.tableAirlines);
+    List<String> airlineIds = airlines.map((airline) => airline['id'] as String).toList();
+
+    List<Map<String, dynamic>> result = [];
+
+    for (String airlineId in airlineIds) {
+      String whereString = '';
+      List<dynamic> whereArgs = [];
+
+      if (departureAirport != null) {
+        whereString += 'departure_airport = ? ';
+        whereArgs.add(departureAirport);
+      }
+
+      if (arrivalAirport != null) {
+        if (whereString.isNotEmpty) whereString += 'AND ';
+        whereString += 'arrival_airport = ? ';
+        whereArgs.add(arrivalAirport);
+      }
+
+      if (whereString.isNotEmpty) whereString += 'AND ';
+      whereString += 'airline_id = ? AND airline_id IN (SELECT airline_id FROM ${DatabaseHelper.tableLegs} GROUP BY airline_id HAVING COUNT(*) <= ?) ';
+
+      whereArgs.add(airlineId);
+      whereArgs.add(numLegs);
+
+      final List<Map<String, dynamic>> legs = await db.query(DatabaseHelper.tableLegs, where: whereString, whereArgs: whereArgs);
+
+      result.addAll(legs);
+    }
+
+    return result;
+  }
+
   Future<int> insert(Map<String, dynamic> row, String tableName) async {
     Database db = await instance.database;
     return await db.insert(tableName, row);

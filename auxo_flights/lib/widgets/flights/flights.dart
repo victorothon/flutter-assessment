@@ -130,7 +130,7 @@ class _FlightsState extends State<Flights> {
                     Text('Departure Airport'),
                     DropdownButton<String>(
                       value: departureAirport,
-                      items: departureAirports.map((String value) {
+                      items: <String>['All', ...departureAirports].map((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
                           child: Text(value),
@@ -138,7 +138,7 @@ class _FlightsState extends State<Flights> {
                       }).toList(),
                       onChanged: (String? newValue) {
                         setState(() {
-                          departureAirport = newValue;
+                          departureAirport = newValue == 'All' ? null : newValue;
                           updateFilteredData();
                         });
                       },
@@ -152,7 +152,7 @@ class _FlightsState extends State<Flights> {
                     Text('Arrival Airport'),
                     DropdownButton<String>(
                       value: arrivalAirport,
-                      items: arrivalAirports.map((String value) {
+                      items: <String>['All', ...arrivalAirports].map((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
                           child: Text(value),
@@ -160,7 +160,7 @@ class _FlightsState extends State<Flights> {
                       }).toList(),
                       onChanged: (String? newValue) {
                         setState(() {
-                          arrivalAirport = newValue;
+                          arrivalAirport = newValue == 'All' ? null : newValue;
                           updateFilteredData();
                         });
                       },
